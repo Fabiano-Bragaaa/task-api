@@ -2,7 +2,19 @@ import http from "node:http";
 
 const tasks = [];
 
-const server = http.createServer((request, response) => {
+const server = http.createServer(async (request, response) => {
+  const buffers = [];
+
+  for await (const chunck of request) {
+    buffers.push(chunck);
+  }
+
+  try {
+    request.body = JSON.parse(Buffer.concat(buffers).toString());
+  } catch {
+    request.body = null;
+  }
+
   const { method, url } = request;
 
   if (method === "GET" && url === "/tasks") {
@@ -11,13 +23,15 @@ const server = http.createServer((request, response) => {
       .end(JSON.stringify(tasks));
   }
   if (method === "POST" && url === "/tasks") {
+    const { title, description, completed_at, created_at, updated_at } =
+      request.body;
     tasks.push({
       id: 1,
-      title: "ola",
-      description: "essa task é nova",
-      completed_at: null,
-      created_at: "2025-05-25T10:00:00Z",
-      updated_at: "2025-05-25T10:00:00Z",
+      title,
+      description,
+      completed_at,
+      created_at,
+      updated_at,
     });
     return response.writeHead(201).end();
   }
