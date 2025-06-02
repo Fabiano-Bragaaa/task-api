@@ -78,6 +78,7 @@ export const routes = [
 
       database.update("tasks", id, {
         completed_at: isCompleted ? null : new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       });
 
       return response.writeHead(204).end();
