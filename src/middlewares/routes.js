@@ -20,6 +20,12 @@ export const routes = [
       const { title, description, completed_at, created_at, updated_at } =
         request.body;
 
+      if (!title || !description) {
+        return response
+          .writeHead(400)
+          .end("titulo e/ou descrição esta em falta");
+      }
+
       const tasks = {
         id: randomUUID(),
         title,
@@ -34,10 +40,60 @@ export const routes = [
     },
   },
   {
-    method: "DELETE",
-    path: buildRoutePath("/task/:id"),
+    method: "PUT",
+    path: buildRoutePath("/tasks/:id"),
     handler: (request, response) => {
       const { id } = request.params;
+
+      const task = database.select("tasks").find((task) => task.id === id);
+
+      if (!task) {
+        return response.writeHead(404).end("Não existe uma task com esse id");
+      }
+
+      const { title, description } = request.body;
+
+      if (!title && !description) {
+        return response.writeHead(400).end("titulo e descrição esta em falta");
+      }
+
+      database.update("tasks", id, { title, description });
+
+      return response.writeHead(204).end();
+    },
+  },
+  {
+    method: "PATCH",
+    path: buildRoutePath("/tasks/:id/complete"),
+    handler: (request, response) => {
+      const { id } = request.params;
+
+      const task = database.select("tasks").find((task) => task.id === id);
+
+      if (!task) {
+        return response.writeHead(404).end("Não existe uma task com esse id");
+      }
+
+      const isCompleted = !!task.completed_at;
+
+      database.update("tasks", id, {
+        completed_at: isCompleted ? null : new Date().toISOString(),
+      });
+
+      return response.writeHead(204).end();
+    },
+  },
+  {
+    method: "DELETE",
+    path: buildRoutePath("/tasks/:id"),
+    handler: (request, response) => {
+      const { id } = request.params;
+
+      const task = database.select("tasks").find((task) => task.id === id);
+
+      if (!task) {
+        return response.writeHead(404).end("Não existe uma task com esse id");
+      }
 
       database.delete("tasks", id);
       return response.writeHead(204).end();
